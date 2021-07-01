@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 # Module of application 2048
@@ -11,12 +10,10 @@ __all__ = ['Events', 'States', 'GameObject']
 
 
 # Python modules
-from abc import ABC
+from abc import ABC, abstractproperty
 from dataclasses import dataclass
 import pygame
 
-# Modules of application
-#
 
 @dataclass
 class _XY:
@@ -36,6 +33,33 @@ class _XY:
         return (self.x, self.y)
 
 # ABSTRACT CLASSES
+
+class TextObject(ABC):
+    """ Base class for all a text object types.  """
+
+    def __init__(self, value: str) -> None:
+        
+        self.value = value
+        self.surface: object
+
+    def draw(self):
+
+        font = pygame.font.SysFont('MS Arial', self.size)
+
+        self.surface = font.render(str(self.value), True, self.color)
+
+    def __int__(self):
+
+        return self.value
+
+    @abstractproperty
+    def color(self):
+        raise NotImplementedError
+
+    @abstractproperty
+    def size(self):
+        raise NotImplementedError
+
 
 class GameObject(ABC):
     """ Base class for all gameobject of tile type.  """
@@ -61,8 +85,14 @@ class GameObject(ABC):
 
                 for item in self.value:
 
-                    item.draw()
-                    self.surface.blit(item.surface, item.position.axises)
+                    if isinstance(item, GameObject):
+
+                        item.draw()
+                        self.surface.blit(item.surface, item.position.axises)
+
+            else:
+
+                self.value.draw()
 
 
 class _SubsystemEvents(ABC):

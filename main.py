@@ -13,10 +13,11 @@ __all__ = ['Application']
 # Python modules
 from dataclasses import dataclass
 import sys
+import random
 import pygame
 
 # Modules of application
-from library import States, Events, GameObject
+from library import States, Events, GameObject, TextObject
 
 
 @dataclass(frozen=True)
@@ -34,6 +35,8 @@ class Color:
     header: tuple = (250, 248, 239)
     board: tuple = (187, 173, 160)
     null_tile: tuple = (205, 193, 180)
+    black_text: tuple = (119, 100, 101)
+    white_text: tuple = (249, 246, 242)
     value_color: tuple = (
         (237, 224, 200),
         (242, 177, 121),
@@ -51,6 +54,30 @@ class GameHeader(GameObject):
 
         super().__init__(x, y, width, height, color=color)
 
+    
+    def update(self, action): pass
+
+
+class ValueOfTile(TextObject):
+    """ .  """
+
+    def update(self, value: str):
+        self.value = value
+
+    @property
+    def size(self):
+
+        length = len(str(self.value))
+        size = length * 5
+
+        return 75 - size
+
+    @property
+    def color(self):
+
+        if self.value > 4: return Color.white_text
+        else: return Color.black_text
+
 
 class TileOfGameBoard(GameObject):
 
@@ -58,14 +85,28 @@ class TileOfGameBoard(GameObject):
         super().__init__(x, y, width, height)
         
         # Default value of tile
-        self.value = 2
+        self.value = ValueOfTile(0)
+
+    def draw(self):
+
+        super().draw()
+
+        if int(self.value) != 0:
+ 
+            value_rect = self.value.surface.get_rect()
+
+            width, height = self.surface.get_size()
+
+            value_rect.center = (width // 2, height // 2)
+
+            self.surface.blit(self.value.surface, value_rect)
 
     @property
-    def color(self):
+    def color(self): # TODO Color switch algorytm
 
         tile_color = None
 
-        if not self.value: tile_color = Color.null_tile
+        if int(self.value) == 0: tile_color = Color.null_tile
         else: 
             tile_color = (238, 228, 218)
 
@@ -73,8 +114,10 @@ class TileOfGameBoard(GameObject):
 
 
 class GameBoard(GameObject):
+    """ Main gameobject. He show tiles and do action for manipulate theys.  """
 
-    def __init__(self, x: int, y: int, width: int, height: int, color: tuple) -> None:
+    def __init__(self, x: int, y: int, width: int, height: int, 
+                color: tuple) -> None:
         super().__init__(x, y, width, height, color=color)
 
         self.value = self._create_tiles()
@@ -99,6 +142,17 @@ class GameBoard(GameObject):
             else: x += 107 + padding
         
         else: return value
+
+    def update(self, action: str):
+
+        null = []
+
+        for tile in self.value:
+            if tile.value.value == 0:
+                null.append(tile)
+
+        tile = random.choice(null)
+        tile.value.update(2)
 
 
 class Application:
@@ -160,7 +214,13 @@ class Application:
         # Display update
         pygame.display.update()
 
-    def _updater(self): pass
+    def _updater(self):
+
+        action = str(self.events.keyboard)
+
+        for obj in self.queue:
+
+            obj.update(action)
 
     def __bool__(self) -> bool:
         """ This method call event handler and check status application. """
